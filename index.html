@@ -1,10 +1,206 @@
- <!DOCTYPE html>
-<html>
-<title>HTML Tutorial</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Fighter Weather</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #1a1a1a;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            text-align: center;
+            color: white;
+        }
+
+        .characters {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+        }
+
+        .character {
+            width: 200px;
+            height: 300px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        /* Replace these URLs with your image URLs */
+        .sunny-character.happy {
+            background-image: url('https://giffiles.alphacoders.com/131/13190.gif');
+            transform: translateY(-20px) scaleX(-1);
+            animation: bounce 1s infinite;
+            background-size: 100% auto;
+        }
+
+        .sunny-character.sad {
+    background-image: url('https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJkdzlseHd4czN5YTFpaTJxNWkxeHFndWZ3MHpiZnR3d2hla2wzdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Yn4WPCOHrM3cyedfk9/giphy.gif');
+    transform: translateY(10px) scaleX(-1); /* Flip the image horizontally */
+    filter: brightness(0.7);
+    background-size: 90% auto; /* Makes the image bigger */
+    background-repeat: no-repeat;
+}
+
+
+.cloudy-character.happy {
+    background-image: url('https://media.nichegamer.com/wp-content/uploads/2015/03/street-fighter-v-mobile-chun-li-2015-03-11.gif');
+    transform: translateY(-20px) scaleX(-1);
+    animation: bounceFlipped 1s infinite;
+    background-size: 85% auto;
+    background-repeat: no-repeat;
+    display: inline-block;
+}
+
+@keyframes bounceFlipped {
+    0%, 100% { transform: translateY(-20px) scaleX(-1); }
+    50% { transform: translateY(-30px) scaleX(-1); }
+}
+
+        .cloudy-character.sad {
+            background-image: url('https://media.tenor.com/-qDNJ21ywSIAAAAi/chunli-street-fighter.gif');
+            transform: translateY(10px);
+            filter: brightness(0.7);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-20px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .weather-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .zip-form {
+            margin: 20px 0;
+        }
+
+        .zip-form input {
+            padding: 8px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            margin-right: 10px;
+            width: 100px;
+        }
+
+        .zip-form button {
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .zip-form button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
 <body>
+    <div class="container">
+        <h1>Street Fighter Weather</h1>
+        <div class="zip-form">
+            <input type="text" id="zipInput" placeholder="Enter ZIP code" maxlength="5" pattern="[0-9]*">
+            <button onclick="updateLocation()">Get Weather</button>
+        </div>
+        <div class="characters">
+            <div class="character sunny-character" id="sunnyCharacter"></div>
+            <div class="character cloudy-character" id="cloudyCharacter"></div>
+        </div>
+        <div class="weather-info" id="weatherInfo">
+            Enter your ZIP code to see the weather
+        </div>
+    </div>
 
-<h1>This is a heading</h1>
-<p>This is a paragraph.</p>
+    <script>
+        const API_KEY = '4daf139468633843c4845e0579c2da21';
+        let currentZip = null;
 
+        async function getWeather() {
+            if (!currentZip) return;
+            
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?zip=${currentZip},us&appid=${API_KEY}&units=metric`
+                );
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateCharacters(data.weather[0].main);
+                    updateWeatherInfo(data);
+                } else {
+                    document.getElementById('weatherInfo').textContent = 'Invalid ZIP code. Please try again.';
+                }
+            } catch (error) {
+                console.error('Error fetching weather:', error);
+                document.getElementById('weatherInfo').textContent = 'Error loading weather data';
+            }
+        }
+
+        function updateLocation() {
+            const zipInput = document.getElementById('zipInput');
+            const zip = zipInput.value.trim();
+            
+            // Basic ZIP code validation
+            if (/^\d{5}$/.test(zip)) {
+                currentZip = zip;
+                getWeather();
+            } else {
+                document.getElementById('weatherInfo').textContent = 'Please enter a valid 5-digit ZIP code';
+            }
+        }
+
+        // Add event listener for Enter key
+        document.getElementById('zipInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                updateLocation();
+            }
+        });
+
+        function updateCharacters(weatherCondition) {
+            const sunnyCharacter = document.getElementById('sunnyCharacter');
+            const cloudyCharacter = document.getElementById('cloudyCharacter');
+
+            if (weatherCondition.toLowerCase().includes('clear') || 
+                weatherCondition.toLowerCase().includes('sun')) {
+                sunnyCharacter.classList.add('happy');
+                sunnyCharacter.classList.remove('sad');
+                cloudyCharacter.classList.add('sad');
+                cloudyCharacter.classList.remove('happy');
+            } else {
+                cloudyCharacter.classList.add('happy');
+                cloudyCharacter.classList.remove('sad');
+                sunnyCharacter.classList.add('sad');
+                sunnyCharacter.classList.remove('happy');
+            }
+        }
+
+        function updateWeatherInfo(data) {
+            const weatherInfo = document.getElementById('weatherInfo');
+            weatherInfo.innerHTML = `
+                <h2>${data.name}</h2>
+                <p>Temperature: ${Math.round(data.main.temp)}°C</p>
+                <p>Weather: ${data.weather[0].description}</p>
+                <p>Humidity: ${data.main.humidity}%</p>
+            `;
+        }
+    </script>
 </body>
-</html> 
+</html>
